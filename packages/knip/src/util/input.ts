@@ -10,6 +10,7 @@ export interface Input {
   optional?: boolean;
   dir?: string;
   containingFilePath?: string;
+  skipExportsAnalysis?: boolean;
 }
 
 export interface ConfigInput extends Input {
@@ -18,11 +19,15 @@ export interface ConfigInput extends Input {
   pluginName: PluginName;
 }
 
-type Options = {
+interface Options {
   optional?: boolean;
   dir?: string;
   containingFilePath?: string;
-};
+}
+
+interface EntryOptions extends Options {
+  skipExportsAnalysis?: boolean;
+}
 
 export const fromBinary = (input: Input) => input.specifier;
 
@@ -34,15 +39,15 @@ export const toBinary = (specifier: string, options: Options = {}): Input => ({
 
 export const isBinary = (input: Input) => input.type === 'binary';
 
-export const toEntry = (specifier: string): Input => ({ type: 'entry', specifier });
+export const toEntry = (specifier: string, options: EntryOptions = {}): Input => ({
+  type: 'entry',
+  specifier,
+  ...options,
+});
 
 export const isEntry = (input: Input) => input.type === 'entry' && !input.production;
 
-export const toProject = (specifier: string): Input => ({ type: 'project', specifier });
-
-export const isProject = (input: Input) => input.type === 'project';
-
-export const toProductionEntry = (specifier: string, options: Options = {}): Input => ({
+export const toProductionEntry = (specifier: string, options: EntryOptions = {}): Input => ({
   type: 'entry',
   specifier,
   production: true,
@@ -50,6 +55,10 @@ export const toProductionEntry = (specifier: string, options: Options = {}): Inp
 });
 
 export const isProductionEntry = (input: Input) => input.type === 'entry' && input.production === true;
+
+export const toProject = (specifier: string): Input => ({ type: 'project', specifier });
+
+export const isProject = (input: Input) => input.type === 'project';
 
 export const toConfig = (pluginName: PluginName, specifier: string, options: Options = {}): ConfigInput => ({
   type: 'config',

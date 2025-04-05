@@ -2,7 +2,6 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import type { PackageJson } from '../types/package-json.js';
 import { _glob } from './glob.js';
-import { getStringValues } from './object.js';
 
 const INDENT = Symbol.for('indent');
 const NEWLINE = Symbol.for('newline');
@@ -28,6 +27,21 @@ const parseJson = (raw: string): ExtendedPackageJson => {
     result[INDENT] = match[2] ?? DEFAULT_INDENT;
   }
   return result;
+};
+
+const getEntriesFromExports = (obj: any): string[] => {
+  if (typeof obj === 'string') return [obj];
+  let values: string[] = [];
+  for (const prop in obj) {
+    if (typeof obj[prop] === 'string') {
+      values.push(obj[prop]);
+    } else if (obj[prop] === null) {
+      values.push(`!${prop}`);
+    } else if (typeof obj[prop] === 'object') {
+      values = values.concat(getEntriesFromExports(obj[prop]));
+    }
+  }
+  return values;
 };
 
 export const load = async (filePath: string) => {
@@ -63,7 +77,12 @@ export const getEntryPathsFromManifest = (
   }
 
   if (exports) {
-    for (const item of getStringValues(exports)) entryPaths.add(item);
+    for (const item of getEntriesFromExports(exports)) {
+      const expanded = item
+        .replace(/\/\*\./, '/**/*.') // /*. → /**/*.
+        .replace(/\/\*\//, '/**/'); // /*/ → /**/
+      entryPaths.add(expanded);
+    }
   }
 
   if (typeof types === 'string') entryPaths.add(types);

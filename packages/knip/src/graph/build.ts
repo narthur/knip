@@ -156,7 +156,7 @@ export async function build({
 
     // Add entry paths from package.json#main, #bin, #exports
     const entryPathsFromManifest = await getEntryPathsFromManifest(manifest, { ...sharedGlobOptions, ignore });
-    for (const id of entryPathsFromManifest.map(id => toProductionEntry(id))) inputs.add(id);
+    for (const id of entryPathsFromManifest) inputs.add(toProductionEntry(id, { skipExportsAnalysis: false }));
 
     // Get dependencies from plugins
     const inputsFromPlugins = await worker.runPlugins();
@@ -181,7 +181,8 @@ export async function build({
     });
 
     const entryFilePatterns = new Set<string>();
-    const productionEntryFilePatterns = new Set<string>();
+    const productionPatterns = new Set<string>();
+    const productionPatternsSkipExports = new Set<string>();
     const projectFilePatterns = new Set<string>();
 
     for (const input of inputs) {
@@ -189,7 +190,12 @@ export async function build({
       if (isEntry(input)) {
         entryFilePatterns.add(isAbsolute(specifier) ? relative(dir, specifier) : specifier);
       } else if (isProductionEntry(input)) {
-        productionEntryFilePatterns.add(isAbsolute(specifier) ? relative(dir, specifier) : specifier);
+        const relativePath = isAbsolute(specifier) ? relative(dir, specifier) : specifier;
+        if (input.skipExportsAnalysis === false) {
+          productionPatterns.add(relativePath);
+        } else {
+          productionPatternsSkipExports.add(relativePath);
+        }
       } else if (isProject(input)) {
         projectFilePatterns.add(isAbsolute(specifier) ? relative(dir, specifier) : specifier);
       } else if (!isConfig(input)) {
@@ -197,7 +203,7 @@ export async function build({
         const resolvedFilePath = getReferencedInternalFilePath(input, ws);
         if (resolvedFilePath) {
           if (isDeferResolveProductionEntry(input)) {
-            productionEntryFilePatterns.add(resolvedFilePath);
+            productionPatternsSkipExports.add(resolvedFilePath);
           } else if (isDeferResolveEntry(input)) {
             if (!isProduction || !input.optional) entryFilePatterns.add(resolvedFilePath);
           } else {
@@ -211,56 +217,70 @@ export async function build({
       const negatedEntryPatterns: string[] = Array.from(entryFilePatterns).map(negate);
 
       {
-        const label = 'entry';
+        const label = 'entry paths';
         const patterns = worker.getProductionEntryFilePatterns(negatedEntryPatterns);
         const workspaceEntryPaths = await _glob({ ...sharedGlobOptions, patterns, gitignore: false, label });
         principal.addEntryPaths(workspaceEntryPaths);
       }
 
       {
-        const label = 'production plugin entry';
-        const patterns = Array.from(productionEntryFilePatterns);
+        const label = 'production entry paths from plugins (skip exports analysis)';
+        const patterns = Array.from(productionPatternsSkipExports);
         const pluginWorkspaceEntryPaths = await _glob({ ...sharedGlobOptions, patterns, label });
         principal.addEntryPaths(pluginWorkspaceEntryPaths, { skipExportsAnalysis: true });
       }
 
       {
-        const label = 'project';
+        const label = 'production entry paths from plugins';
+        const patterns = Array.from(productionPatterns);
+        const pluginWorkspaceEntryPaths = await _glob({ ...sharedGlobOptions, patterns, label });
+        principal.addEntryPaths(pluginWorkspaceEntryPaths);
+      }
+
+      {
+        const label = 'project paths';
         const patterns = worker.getProductionProjectFilePatterns(negatedEntryPatterns);
         const workspaceProjectPaths = await _glob({ ...sharedGlobOptions, patterns, label });
         for (const projectPath of workspaceProjectPaths) principal.addProjectPath(projectPath);
       }
     } else {
       {
-        const label = 'entry';
+        const label = 'entry paths';
         const patterns = worker.getEntryFilePatterns();
         const workspaceEntryPaths = await _glob({ ...sharedGlobOptions, patterns, gitignore: false, label });
         principal.addEntryPaths(workspaceEntryPaths);
       }
 
       {
-        const label = 'project';
-        const patterns = worker.getProjectFilePatterns([...productionEntryFilePatterns, ...projectFilePatterns]);
-        const workspaceProjectPaths = await _glob({ ...sharedGlobOptions, patterns, label });
-        for (const projectPath of workspaceProjectPaths) principal.addProjectPath(projectPath);
-      }
-
-      {
-        const label = 'plugin entry';
-        const patterns = worker.getPluginEntryFilePatterns([...entryFilePatterns, ...productionEntryFilePatterns]);
+        const label = 'entry paths from plugins (skip exports analysis)';
+        const patterns = worker.getPluginEntryFilePatterns([...entryFilePatterns, ...productionPatternsSkipExports]);
         const pluginWorkspaceEntryPaths = await _glob({ ...sharedGlobOptions, patterns, label });
         principal.addEntryPaths(pluginWorkspaceEntryPaths, { skipExportsAnalysis: true });
       }
 
       {
-        const label = 'plugin project';
+        const label = 'entry paths from plugins';
+        const patterns = worker.getPluginEntryFilePatterns([...productionPatterns]);
+        const pluginWorkspaceEntryPaths = await _glob({ ...sharedGlobOptions, patterns, label });
+        principal.addEntryPaths(pluginWorkspaceEntryPaths);
+      }
+
+      {
+        const label = 'project paths';
+        const patterns = worker.getProjectFilePatterns([...productionPatternsSkipExports, ...projectFilePatterns]);
+        const workspaceProjectPaths = await _glob({ ...sharedGlobOptions, patterns, label });
+        for (const projectPath of workspaceProjectPaths) principal.addProjectPath(projectPath);
+      }
+
+      {
+        const label = 'project paths from plugins';
         const patterns = worker.getPluginProjectFilePatterns();
         const pluginWorkspaceProjectPaths = await _glob({ ...sharedGlobOptions, patterns, label });
         for (const projectPath of pluginWorkspaceProjectPaths) principal.addProjectPath(projectPath);
       }
 
       {
-        const label = 'plugin configuration';
+        const label = 'plugin configuration paths (skip exports analysis)';
         const patterns = worker.getPluginConfigPatterns();
         const configurationEntryPaths = await _glob({ ...sharedGlobOptions, patterns, label });
         principal.addEntryPaths(configurationEntryPaths, { skipExportsAnalysis: true });
