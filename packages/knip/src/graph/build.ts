@@ -267,7 +267,7 @@ export async function build({
 
       {
         const label = 'entry paths from plugins';
-        const patterns = worker.getPluginEntryFilePatterns([...entryPatterns, ...productionPatterns]);
+        const patterns = worker.getPluginEntryFilePatterns([...productionPatterns]);
         const pluginWorkspaceEntryPaths = await _glob({ ...sharedGlobOptions, patterns, label });
         principal.addEntryPaths(pluginWorkspaceEntryPaths);
       }
