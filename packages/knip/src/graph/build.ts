@@ -180,7 +180,8 @@ export async function build({
       cacheLocation,
     });
 
-    const entryFilePatterns = new Set<string>();
+    const entryPatterns = new Set<string>();
+    const entryPatternsSkipExports = new Set<string>();
     const productionPatterns = new Set<string>();
     const productionPatternsSkipExports = new Set<string>();
     const projectFilePatterns = new Set<string>();
@@ -188,7 +189,12 @@ export async function build({
     for (const input of inputs) {
       const specifier = input.specifier;
       if (isEntry(input)) {
-        entryFilePatterns.add(isAbsolute(specifier) ? relative(dir, specifier) : specifier);
+        const relativePath = isAbsolute(specifier) ? relative(dir, specifier) : specifier;
+        if (input.skipExportsAnalysis === false) {
+          entryPatterns.add(relativePath);
+        } else {
+          entryPatternsSkipExports.add(relativePath);
+        }
       } else if (isProductionEntry(input)) {
         const relativePath = isAbsolute(specifier) ? relative(dir, specifier) : specifier;
         if (input.skipExportsAnalysis === false) {
@@ -205,7 +211,7 @@ export async function build({
           if (isDeferResolveProductionEntry(input)) {
             productionPatternsSkipExports.add(resolvedFilePath);
           } else if (isDeferResolveEntry(input)) {
-            if (!isProduction || !input.optional) entryFilePatterns.add(resolvedFilePath);
+            if (!isProduction || !input.optional) entryPatternsSkipExports.add(resolvedFilePath);
           } else {
             principal.addEntryPath(resolvedFilePath, { skipExportsAnalysis: true });
           }
@@ -214,7 +220,7 @@ export async function build({
     }
 
     if (isProduction) {
-      const negatedEntryPatterns: string[] = Array.from(entryFilePatterns).map(negate);
+      const negatedEntryPatterns: string[] = [...entryPatterns, ...entryPatternsSkipExports].map(negate);
 
       {
         const label = 'entry paths';
@@ -253,14 +259,17 @@ export async function build({
 
       {
         const label = 'entry paths from plugins (skip exports analysis)';
-        const patterns = worker.getPluginEntryFilePatterns([...entryFilePatterns, ...productionPatternsSkipExports]);
+        const patterns = worker.getPluginEntryFilePatterns([
+          ...entryPatternsSkipExports,
+          ...productionPatternsSkipExports,
+        ]);
         const pluginWorkspaceEntryPaths = await _glob({ ...sharedGlobOptions, patterns, label });
         principal.addEntryPaths(pluginWorkspaceEntryPaths, { skipExportsAnalysis: true });
       }
 
       {
         const label = 'entry paths from plugins';
-        const patterns = worker.getPluginEntryFilePatterns([...productionPatterns]);
+        const patterns = worker.getPluginEntryFilePatterns([...entryPatterns, ...productionPatterns]);
         const pluginWorkspaceEntryPaths = await _glob({ ...sharedGlobOptions, patterns, label });
         principal.addEntryPaths(pluginWorkspaceEntryPaths);
       }

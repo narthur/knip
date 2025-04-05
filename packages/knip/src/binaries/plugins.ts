@@ -40,7 +40,7 @@ export const resolve: BinaryResolver = (binary, _args, options) => {
   const positionals = [];
   if (pluginArgs.positional && parsed._[0]) {
     const id = parsed._[0]; // let's start out safe, but sometimes we'll want more
-    if (isGlobLike(id)) positionals.push(toEntry(id));
+    if (isGlobLike(id)) positionals.push(toEntry(id, { skipExportsAnalysis: false }));
     else {
       if (id.includes('node_modules/.bin/')) positionals.push(toBinary(extractBinary(id)));
       else positionals.push(toDeferResolveEntry(id, { optional: true }));
