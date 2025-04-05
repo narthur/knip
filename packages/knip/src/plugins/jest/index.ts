@@ -103,7 +103,7 @@ const resolveEntryPaths: ResolveEntryPaths<JestConfig> = async (localConfig, opt
   if (typeof localConfig === 'function') localConfig = await localConfig();
   const rootDir = localConfig.rootDir ?? configFileDir;
   const replaceRootDir = (name: string) => name.replace(/<rootDir>/, rootDir);
-  return (localConfig.testMatch ?? []).map(replaceRootDir).map(toEntry);
+  return (localConfig.testMatch ?? []).map(replaceRootDir).map(id => toEntry(id));
 };
 
 const resolveConfig: ResolveConfig<JestConfig> = async (localConfig, options) => {

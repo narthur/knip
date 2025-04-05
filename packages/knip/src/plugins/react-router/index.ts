@@ -47,7 +47,7 @@ const resolveEntryPaths: ResolveEntryPaths<PluginConfig> = async (localConfig, o
     join(appDir, 'root.{jsx,tsx}'),
     join(appDir, 'entry.{client,server}.{js,jsx,ts,tsx}'),
     ...routes,
-  ].map(toEntry);
+  ].map(id => toEntry(id));
 };
 
 export default {

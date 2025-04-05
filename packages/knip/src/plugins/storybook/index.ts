@@ -30,7 +30,7 @@ const resolveEntryPaths: ResolveEntryPaths<StorybookConfig> = async (localConfig
     return relative(cwd, join(configFileDir, pattern.directory, pattern.files ?? stories[0]));
   });
   const patterns = [...restEntry, ...(relativePatterns && relativePatterns.length > 0 ? relativePatterns : stories)];
-  return patterns.map(toEntry);
+  return patterns.map(id => toEntry(id));
 };
 
 const resolveConfig: ResolveConfig<StorybookConfig> = async localConfig => {

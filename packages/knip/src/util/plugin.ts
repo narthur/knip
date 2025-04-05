@@ -59,7 +59,7 @@ export const getFinalEntryPaths = (plugin: Plugin, options: PluginOptions, confi
   const { config, isProduction } = options;
 
   // TODO Leftover from plugin API streamline refactor
-  if (plugin.title === 'Storybook') return [...(config.entry ?? []).map(toEntry), ...configEntryPaths];
+  if (plugin.title === 'Storybook') return [...(config.entry ?? []).map(id => toEntry(id)), ...configEntryPaths];
 
   const toEntryPathProtocol =
     isProduction && plugin.production && plugin.production.length > 0 ? toProductionEntry : toEntry;
@@ -68,5 +68,8 @@ export const getFinalEntryPaths = (plugin: Plugin, options: PluginOptions, confi
 
   if (configEntryPaths.length > 0) return configEntryPaths;
 
-  return [...(plugin.entry ?? []).map(toEntry), ...(plugin.production ?? []).map(id => toProductionEntry(id))];
+  return [
+    ...(plugin.entry ?? []).map(id => toEntry(id)),
+    ...(plugin.production ?? []).map(id => toProductionEntry(id)),
+  ];
 };
