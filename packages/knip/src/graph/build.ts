@@ -176,7 +176,7 @@ export async function build({
 
     // Get dependencies from plugins
     const inputsFromPlugins = await worker.runPlugins();
-    for (const id of inputsFromPlugins) inputs.add({ ...id, skipExportsAnalysis: true });
+    for (const id of inputsFromPlugins) inputs.add(Object.assign(id, { skipExportsAnalysis: true }));
 
     enabledPluginsStore.set(name, worker.enabledPlugins);
 

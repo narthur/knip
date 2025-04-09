@@ -15,13 +15,14 @@ test('Resolve package entry points to source files', async () => {
 
   assert(issues.exports['feature/internal/system/used.ts'].unused);
   assert(issues.files.has(join(cwd, 'feature/internal/system/unused.ts')));
+  assert(issues.files.has(join(cwd, 'src/public/lib/rary/lost.js')));
 
   assert.deepEqual(counters, {
     ...baseCounters,
     exports: 1,
-    files: 1,
-    processed: 11,
-    total: 11,
+    files: 2,
+    processed: 12,
+    total: 12,
   });
 });
 
@@ -38,12 +39,13 @@ test('Resolve package entry points to source files and report unused exports', a
   assert(issues.exports['lib/index.js'].entryExport);
 
   assert(issues.files.has(join(cwd, 'feature/internal/system/unused.ts')));
+  assert(issues.files.has(join(cwd, 'src/public/lib/rary/lost.js')));
 
   assert.deepEqual(counters, {
     ...baseCounters,
     exports: 4,
-    files: 1,
-    processed: 11,
-    total: 11,
+    files: 2,
+    processed: 12,
+    total: 12,
   });
 });

@@ -11,6 +11,7 @@
     "./feature/*.js": "./feature/*.js",
     "./feature/internal/*": null,
     "./*": "./src/public/*/index.ts",
-    "./runtime/*": "./dist/runtime/*"
+    "./runtime/*": "./dist/runtime/*",
+    "./ignored": "./*"
   }
 }

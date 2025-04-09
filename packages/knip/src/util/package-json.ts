@@ -87,5 +87,5 @@ export const getEntryPathsFromManifest = (manifest: PackageJson, options: { cwd:
   if (typeof types === 'string') entryPaths.add(types);
   if (typeof typings === 'string') entryPaths.add(typings);
 
-  return _glob({ patterns: Array.from(entryPaths), ...options, gitignore: false, label: 'package.json entry' });
+  return _glob({ patterns: Array.from(entryPaths), ...options, gitignore: false, label: 'package.json entry paths' });
 };
