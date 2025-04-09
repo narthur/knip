@@ -154,7 +154,7 @@ export async function build({
 
     // Add entry paths from package.json#main, #bin, #exports
     const entryPathsFromManifest = await getEntryPathsFromManifest(manifest, { ...sharedGlobOptions, ignore });
-    for (const id of entryPathsFromManifest) inputs.add(toProductionEntry(id, { skipExportsAnalysis: false }));
+    for (const id of entryPathsFromManifest) inputs.add(toProductionEntry(id));
 
     // workspace + worker → principal
     const principal = factory.createPrincipal({
@@ -174,7 +174,7 @@ export async function build({
 
     // Get dependencies from plugins
     const inputsFromPlugins = await worker.runPlugins();
-    for (const id of inputsFromPlugins) inputs.add(id);
+    for (const id of inputsFromPlugins) inputs.add({ ...id, skipExportsAnalysis: true });
 
     enabledPluginsStore.set(name, worker.enabledPlugins);
 
@@ -188,14 +188,14 @@ export async function build({
       const specifier = input.specifier;
       if (isEntry(input)) {
         const relativePath = isAbsolute(specifier) ? relative(dir, specifier) : specifier;
-        if (input.skipExportsAnalysis === false) {
+        if (!input.skipExportsAnalysis) {
           entryPatterns.add(relativePath);
         } else {
           entryPatternsSkipExports.add(relativePath);
         }
       } else if (isProductionEntry(input)) {
         const relativePath = isAbsolute(specifier) ? relative(dir, specifier) : specifier;
-        if (input.skipExportsAnalysis === false) {
+        if (!input.skipExportsAnalysis) {
           productionPatterns.add(relativePath);
         } else {
           productionPatternsSkipExports.add(relativePath);
