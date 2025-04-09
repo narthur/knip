@@ -57,7 +57,7 @@ export const save = async (filePath: string, content: ExtendedPackageJson) => {
   await writeFile(filePath, fileContent);
 };
 
-export const getEntryPathsFromManifest = (manifest: PackageJson, cwd: string) => {
+export const getEntryPathsFromManifest = (manifest: PackageJson, options: { cwd: string; ignore: string[] }) => {
   const { main, module, browser, bin, exports, types, typings } = manifest;
 
   const entryPaths = new Set<string>();
@@ -75,6 +75,7 @@ export const getEntryPathsFromManifest = (manifest: PackageJson, cwd: string) =>
 
   if (exports) {
     for (const item of getEntriesFromExports(exports)) {
+      if (item === './*') continue;
       const expanded = item
         .replace(/\/\*$/, '/**') // /* → /**
         .replace(/\/\*\./, '/**/*.') // /*. → /**/*.
@@ -86,5 +87,5 @@ export const getEntryPathsFromManifest = (manifest: PackageJson, cwd: string) =>
   if (typeof types === 'string') entryPaths.add(types);
   if (typeof typings === 'string') entryPaths.add(typings);
 
-  return _glob({ patterns: Array.from(entryPaths), cwd });
+  return _glob({ patterns: Array.from(entryPaths), ...options, gitignore: false, label: 'package.json entry' });
 };

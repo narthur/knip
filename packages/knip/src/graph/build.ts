@@ -153,7 +153,7 @@ export async function build({
     collector.addIgnorePatterns(ignore.map(pattern => join(cwd, pattern)));
 
     // Add entry paths from package.json#main, #bin, #exports and apply source mapping
-    const entryPathsFromManifest = await getEntryPathsFromManifest(manifest, dir);
+    const entryPathsFromManifest = await getEntryPathsFromManifest(manifest, { cwd: dir, ignore });
     for (const filePath of entryPathsFromManifest) {
       inputs.add(toProductionEntry(toSourceFilePath(filePath) ?? filePath));
     }
