@@ -2,6 +2,7 @@
   "name": "@fixtures/package-entry-points",
   "exports": {
     ".": "./lib/index.js",
+    "./app": "./dist/app.js",
     "./lib": "./lib/index.js",
     "./lib/*": "./lib/*.js",
     "./lib/*.js": "./lib/*.js",
@@ -9,6 +10,7 @@
     "./feature/*": "./feature/*.js",
     "./feature/*.js": "./feature/*.js",
     "./feature/internal/*": null,
-    "./*": "./src/public/*/index.ts"
+    "./*": "./src/public/*/index.ts",
+    "./runtime/*": "./dist/runtime/*"
   }
 }

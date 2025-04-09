@@ -18,10 +18,12 @@ test('Skip exports analysis', async () => {
 
   assert(issues.exports['src/used.js'].default);
   assert(issues.exports['src/used.js'].unused);
+  assert(issues.exports['lib/used.js'].default);
+  assert(issues.exports['lib/used.js'].unused);
 
   assert.deepEqual(counters, {
     ...baseCounters,
-    exports: 2,
+    exports: 4,
     binaries: 2,
     processed: 7,
     total: 7,
@@ -38,14 +40,19 @@ test('Skip exports analysis (isIncludeEntryExports)', async () => {
   assert(issues.binaries['package.json'].nodemon);
   assert(issues.binaries['package.json'].playwright);
 
-  assert(issues.exports['lib/used.js'].default);
-  assert(issues.exports['lib/used.js'].unused);
+  assert(issues.exports['src/index.js'].reexport);
+
   assert(issues.exports['src/used.js'].default);
   assert(issues.exports['src/used.js'].unused);
+  assert(issues.exports['src/used.js'].reexport);
+
+  assert(issues.exports['lib/used.js'].default);
+  assert(issues.exports['lib/used.js'].unused);
+  assert(issues.exports['lib/used.js'].reexport);
 
   assert.deepEqual(counters, {
     ...baseCounters,
-    exports: 4,
+    exports: 7,
     binaries: 2,
     processed: 7,
     total: 7,

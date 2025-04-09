@@ -57,10 +57,7 @@ export const save = async (filePath: string, content: ExtendedPackageJson) => {
   await writeFile(filePath, fileContent);
 };
 
-export const getEntryPathsFromManifest = (
-  manifest: PackageJson,
-  sharedGlobOptions: { cwd: string; dir: string; gitignore: boolean; ignore: string[] }
-) => {
+export const getEntryPathsFromManifest = (manifest: PackageJson, cwd: string) => {
   const { main, module, browser, bin, exports, types, typings } = manifest;
 
   const entryPaths = new Set<string>();
@@ -79,6 +76,7 @@ export const getEntryPathsFromManifest = (
   if (exports) {
     for (const item of getEntriesFromExports(exports)) {
       const expanded = item
+        .replace(/\/\*$/, '/**') // /* → /**
         .replace(/\/\*\./, '/**/*.') // /*. → /**/*.
         .replace(/\/\*\//, '/**/'); // /*/ → /**/
       entryPaths.add(expanded);
@@ -88,9 +86,5 @@ export const getEntryPathsFromManifest = (
   if (typeof types === 'string') entryPaths.add(types);
   if (typeof typings === 'string') entryPaths.add(typings);
 
-  // Use glob, as we only want source files that:
-  // - exist
-  // - are not (generated) files that are .gitignore'd
-  // - do not match configured `ignore` patterns
-  return _glob({ ...sharedGlobOptions, patterns: Array.from(entryPaths), label: 'package.json entry' });
+  return _glob({ patterns: Array.from(entryPaths), cwd });
 };
